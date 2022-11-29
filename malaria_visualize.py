@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib
+
 # matplotlib.use('TkAgg') # Mac specific
 import matplotlib.pyplot as plt
 
@@ -14,16 +15,16 @@ class Visualization:
         self.w = width
         self.pauseTime = pauseTime
         grid = np.zeros((self.w, self.h))
-        self.im = plt.imshow(grid, vmin=-3, vmax=2, cmap='rainbow')
+        self.im = plt.imshow(grid, vmin=-3, vmax=2, cmap="rainbow")
         """
         Color information
         """
         fig = plt.gcf()
-        fig.text(0.02, 0.5, 'M: inf', color='red', fontsize=14)
-        fig.text(0.02, 0.45, 'M: not-inf', color='orange', fontsize=14)
-        fig.text(0.02, 0.35, 'H: sus', color='cyan', fontsize=14)
-        fig.text(0.02, 0.3, 'H: inf', color='blue', fontsize=14)
-        fig.text(0.02, 0.25, 'H: imm', color='purple', fontsize=14)
+        fig.text(0.02, 0.5, "M: inf", color="red", fontsize=14)
+        fig.text(0.02, 0.45, "M: not-inf", color="orange", fontsize=14)
+        fig.text(0.02, 0.35, "H: sus", color="cyan", fontsize=14)
+        fig.text(0.02, 0.3, "H: inf", color="blue", fontsize=14)
+        fig.text(0.02, 0.25, "H: imm", color="purple", fontsize=14)
         plt.subplots_adjust(left=0.3)
 
     def update(self, t, mosquitoPopulation, humanPopulation):
@@ -44,17 +45,19 @@ class Visualization:
                 grid[m.position[0]][m.position[1]] = 1
 
         for h in humanPopulation:
-            if h.state == 'S':
+            if h.state == "S":
                 grid[h.position[0]][h.position[1]] = -1
-            elif h.state == 'I':
+            elif h.state == "I":
                 grid[h.position[0]][h.position[1]] = -2
             else:
-                grid[h.position[0]][h.position[1]] = -3
+                grid[h.position[0]][
+                    h.position[1]
+                ] = -3  # when is the human not susceptible nor infected?
 
         self.im.set_data(grid)
 
         plt.draw()
-        plt.title('t = %i' % t)
+        plt.title("t = %i" % t)
         plt.pause(0.1)
 
     def persist(self):
