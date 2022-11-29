@@ -275,7 +275,7 @@ if __name__ == "__main__":
     Simulation parameters
     """
     fileName = "simulation"
-    timeSteps = 100
+    timeSteps = 40
     t = 0
 
     # whether or not to run simulations and/or plot
@@ -287,6 +287,7 @@ if __name__ == "__main__":
         Run a simulation for an indicated number of timesteps.
         """
         file = open(fileName + ".csv", "w")
+
         sim = Model(
             width=20,
             height=20,
@@ -298,6 +299,7 @@ if __name__ == "__main__":
             initMosquitoHungry=1,
             infectionPeriod=10,
         )
+
         vis = malaria_visualize.Visualization(sim.height, sim.width)
 
         print("Starting simulation")
