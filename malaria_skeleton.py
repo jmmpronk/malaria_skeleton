@@ -129,6 +129,7 @@ class Model:
                     and np.random.uniform() <= self.biteProb
                 ):
                     m.bite(h, self.humanInfectionProb, self.mosquitoInfectionProb)
+                    m.lastMeal = 0
 
             """
             Set the hungry state from false to true after a
@@ -261,7 +262,7 @@ if __name__ == "__main__":
     Simulation parameters
     """
     fileName = "simulation"
-    timeSteps = 100
+    timeSteps = 40
     t = 0
 
     # whether or not to run simulations and/or plot
@@ -273,7 +274,7 @@ if __name__ == "__main__":
         Run a simulation for an indicated number of timesteps.
         """
         file = open(fileName + ".csv", "w")
-        sim = Model(width=50, height=50, nHuman=1, nMosquito=20, initHumanInfected=0)
+        sim = Model(width=30, height=30, nHuman=10, nMosquito=20, initHumanInfected=1)
         vis = malaria_visualize.Visualization(sim.height, sim.width)
 
         print("Starting simulation")

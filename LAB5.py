@@ -16,4 +16,4 @@ for i in range(1000):
         sim.update()
         measurements[sim_attribute].append(attributes[sim_attribute])
 
-# print(measurements)
+print(measurements["death_counts"][-10:])

@@ -1,8 +1,11 @@
 import numpy as np
-import matplotlib
+import matplotlib as mpl
 
 # matplotlib.use('TkAgg') # Mac specific
 import matplotlib.pyplot as plt
+import matplotlib.pylab as pl
+
+# from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 
 
 class Visualization:
@@ -15,16 +18,18 @@ class Visualization:
         self.w = width
         self.pauseTime = pauseTime
         grid = np.zeros((self.w, self.h))
-        self.im = plt.imshow(grid, vmin=-3, vmax=2, cmap="rainbow")
         """
         Color information
         """
+        colors = pl.cm.rainbow(np.linspace(0, 1, 6))
+        self.im = plt.imshow(grid, vmin=-3, vmax=2, cmap="rainbow")
+
         fig = plt.gcf()
-        fig.text(0.02, 0.5, "M: inf", color="red", fontsize=14)
-        fig.text(0.02, 0.45, "M: not-inf", color="orange", fontsize=14)
-        fig.text(0.02, 0.35, "H: sus", color="cyan", fontsize=14)
-        fig.text(0.02, 0.3, "H: inf", color="blue", fontsize=14)
-        fig.text(0.02, 0.25, "H: imm", color="purple", fontsize=14)
+        fig.text(0.02, 0.5, "M: inf", color=colors[5], fontsize=14)
+        fig.text(0.02, 0.45, "M: not-inf", color=colors[4], fontsize=14)
+        fig.text(0.02, 0.35, "H: sus", color=colors[2], fontsize=14)
+        fig.text(0.02, 0.3, "H: inf", color=colors[1], fontsize=14)
+        fig.text(0.02, 0.25, "H: imm", color=colors[0], fontsize=14)
         plt.subplots_adjust(left=0.3)
 
     def update(self, t, mosquitoPopulation, humanPopulation):
@@ -49,10 +54,9 @@ class Visualization:
                 grid[h.position[0]][h.position[1]] = -1
             elif h.state == "I":
                 grid[h.position[0]][h.position[1]] = -2
-            else:
-                grid[h.position[0]][
-                    h.position[1]
-                ] = -3  # when is the human not susceptible nor infected?
+            elif h.state == "Immune":
+                print("Human immune")
+                grid[h.position[0]][h.position[1]] = -3
 
         self.im.set_data(grid)
 
