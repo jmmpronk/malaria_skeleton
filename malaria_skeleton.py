@@ -43,6 +43,7 @@ class Model:
         """
         self.infectedCount = 0
         self.deathCount = 0
+        self.immunityCount = 0
         # etc.
 
         """
@@ -60,7 +61,7 @@ class Model:
         objects is initialized with the "infected" state.
         """
         humanPopulation = []
-        humanPositions = []
+        self.humanPositions = []
         for i in range(self.nHuman):
             x = np.random.randint(self.width)
             y = np.random.randint(self.height)
@@ -70,7 +71,7 @@ class Model:
             """
 
             # find new position if position is already taken
-            while (x, y) in humanPositions:
+            while (x, y) in self.humanPositions:
                 # print(f"{(x, y)} already in positions {humanPositions}")
 
                 # generate new coordinates
@@ -78,7 +79,7 @@ class Model:
                 y = np.random.randint(self.height)
 
             # store position
-            humanPositions.append((x, y))
+            self.humanPositions.append((x, y))
 
             # determine if human is infected or not
             if (i / self.nHuman) <= initHumanInfected:
@@ -152,7 +153,7 @@ class Model:
 
         for j, h in enumerate(self.humanPopulation):
             """
-            To implement: update the human population.
+            update the human population.
             """
 
             if h.state == "I":
@@ -169,8 +170,19 @@ class Model:
                         self.deathCount += 1
                         print("Dead!")
 
+                        self.humanPositions[j] = ()
+
                         # human reincarnates on same position
-                        self.humanPopulation[j] = Human(*h.position, state="S")
+
+                        x = np.random.randint(self.width)
+                        y = np.random.randint(self.height)
+
+                        while (x, y) in self.humanPositions:
+                            x = np.random.randint(self.width)
+                            y = np.random.randint(self.height)
+
+                        self.humanPopulation[j] = Human(x, y, state="S")
+
                     else:
                         """
                         Human is immune
@@ -178,6 +190,7 @@ class Model:
                         h.state = "Immune"
                         print("Immunity!")
                         h.lastImmunity = 0
+                        self.immunityCount += 1
                 else:
                     # add time to last infection
                     h.lastInfection += 1
@@ -194,7 +207,7 @@ class Model:
         To implement: update the data/statistics e.g. infectedCount,
                       deathCount, etc.
         """
-        return self.infectedCount, self.deathCount
+        return self.infectedCount, self.deathCount, self.immunityCount
 
 
 class Mosquito:
@@ -274,13 +287,25 @@ if __name__ == "__main__":
         Run a simulation for an indicated number of timesteps.
         """
         file = open(fileName + ".csv", "w")
-        sim = Model(width=30, height=30, nHuman=10, nMosquito=20, initHumanInfected=1)
+
+        sim = Model(
+            width=20,
+            height=20,
+            nHuman=10,
+            nMosquito=20,
+            initHumanInfected=1,
+            mosquitoInfectionProb=1,
+            humanDeathByInfectionProb=0.75,
+            initMosquitoHungry=1,
+            infectionPeriod=10,
+        )
+
         vis = malaria_visualize.Visualization(sim.height, sim.width)
 
         print("Starting simulation")
         while t < timeSteps:
             # print(t)
-            [d1, d2] = sim.update()  # Catch the data
+            [d1, d2, d3] = sim.update()  # Catch the data
             line = (
                 str(t) + "," + str(d1) + "," + str(d2) + "\n"
             )  # Separate the data with commas
