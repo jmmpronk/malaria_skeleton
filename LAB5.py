@@ -22,6 +22,8 @@ parameters = {
     "mealInterval": [3, True, 1, 100],
     "infectionPeriod": [20, True, 1, 100],
     "immuntiyPeriod": [4, True, 1, 100],
+    "humanNaturalDeathProb": [0.001, False],
+    "mosquitoNaturalDeathProb": [0.01, False],
 }
 
 # 50, 50, 100, 200, 0.9, 0.0, 1.0, 0.8, 0.8, 0.5, 0.9, 3, 20, 4
