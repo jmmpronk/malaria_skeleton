@@ -11,14 +11,15 @@ class Model:
         nHuman=10,
         nMosquito=20,
         initMosquitoHungry=0.5,
+        initMosquitoInfected=0.2,
         initHumanInfected=0.2,
         humanInfectionProb=0.25,
         mosquitoInfectionProb=0.9,
+        humanDeathByInfectionProb=0.3,
         biteProb=1.0,
         mealInterval=5,
         infectionPeriod=3,
         immuntiyPeriod=10,
-        humanDeathByInfectionProb=0.3,
     ):
         """
         Model parameters
@@ -30,11 +31,11 @@ class Model:
         self.nMosquito = nMosquito
         self.humanInfectionProb = humanInfectionProb
         self.mosquitoInfectionProb = mosquitoInfectionProb
+        self.humanDeathByInfectionProb = humanDeathByInfectionProb
         self.biteProb = biteProb
         self.mealInterval = mealInterval
         self.infectionPeriod = infectionPeriod
         self.immunityPeriod = immuntiyPeriod
-        self.humanDeathByInfectionProb = humanDeathByInfectionProb
         # etc.
 
         """
@@ -50,7 +51,9 @@ class Model:
         Make a data structure in this case a list with the humans and mosquitos.
         """
         self.humanPopulation = self.set_human_population(initHumanInfected)
-        self.mosquitoPopulation = self.set_mosquito_population(initMosquitoHungry)
+        self.mosquitoPopulation = self.set_mosquito_population(
+            initMosquitoHungry, initMosquitoInfected
+        )
 
     def set_human_population(self, initHumanInfected):
         """
@@ -91,7 +94,7 @@ class Model:
 
         return humanPopulation
 
-    def set_mosquito_population(self, initMosquitoHungry):
+    def set_mosquito_population(self, initMosquitoHungry, initMosquitoInfected):
         """
         This function makes the initial mosquito population, by iteratively
         adding an object of the Mosquito class to the mosquitoPopulation list.
@@ -106,7 +109,13 @@ class Model:
                 hungry = True
             else:
                 hungry = False
-            mosquitoPopulation.append(Mosquito(x, y, hungry))
+
+            # determine if human is infected or not
+            if np.random.uniform() <= initMosquitoInfected:
+                state = True  # True for infected
+            else:
+                state = False  # False for susceptible
+            mosquitoPopulation.append(Mosquito(x, y, hungry, state))
         return mosquitoPopulation
 
     def update(self):
@@ -159,15 +168,24 @@ class Model:
                 # add infection to the total when human just got infected
                 if h.lastInfection == 0:
                     self.infectedCount += 1
-                    print("Infected!")
+                    # print(f"Human {j}: Infected!")
 
-                if h.lastInfection > self.infectionPeriod:
+                # if h.lastInfection > self.infectionPeriod:
+
+                # end of infection according to decay rate probability
+                if np.random.uniform() >= np.exp(
+                    -h.lastInfection / self.infectionPeriod
+                ):
+                    # remove from infection count
+                    self.infectedCount -= 1
+
+                    # human dies or gets immune
                     if np.random.uniform() <= self.humanDeathByInfectionProb:
                         """
                         Human dies
                         """
                         self.deathCount += 1
-                        print("Dead!")
+                        # print(f"Human {j}: Dead!")
 
                         # human reincarnates on same position
                         self.humanPopulation[j] = Human(*h.position, state="S")
@@ -176,7 +194,7 @@ class Model:
                         Human is immune
                         """
                         h.state = "Immune"
-                        print("Immunity!")
+                        # print(f"Human {j}: Immune!")
                         h.lastImmunity = 0
                 else:
                     # add time to last infection
@@ -184,9 +202,12 @@ class Model:
 
             elif h.state == "Immune":
                 h.lastImmunity += 1
-                if h.lastImmunity > self.immunityPeriod:
+                # if h.lastImmunity > self.immunityPeriod:
+
+                # also according decay rate probability
+                if np.random.uniform() >= np.exp(-h.lastImmunity / self.immunityPeriod):
                     h.state = "S"
-                    print("Susceptible!")
+                    # print(f"Human {j}: Susceptible!")
 
             ## to implement: human dies of natural causes
 
@@ -198,7 +219,7 @@ class Model:
 
 
 class Mosquito:
-    def __init__(self, x, y, hungry):
+    def __init__(self, x, y, hungry, state):
         """
         Class to model the mosquitos. Each mosquito is initialized with a random
         position on the grid. Mosquitos can start out hungry or not hungry.
@@ -206,7 +227,7 @@ class Mosquito:
         """
         self.position = [x, y]
         self.hungry = hungry
-        self.infected = False
+        self.infected = state
         self.lastMeal = 0  # time since last meal
 
     def bite(self, human, humanInfectionProb, mosquitoInfectionProb):
@@ -262,33 +283,34 @@ if __name__ == "__main__":
     Simulation parameters
     """
     fileName = "simulation"
-    timeSteps = 40
+    timeSteps = 3000
     t = 0
 
     # whether or not to run simulations and/or plot
     runSim = True
-    plotData = False
+    plotData = True
 
     if runSim:
         """
         Run a simulation for an indicated number of timesteps.
         """
         file = open(fileName + ".csv", "w")
-        sim = Model(width=30, height=30, nHuman=10, nMosquito=20, initHumanInfected=1)
-        vis = malaria_visualize.Visualization(sim.height, sim.width)
+        sim = Model(50, 50, 100, 200, 0.9, 0.0, 1.0, 0.8, 0.8, 0.5, 0.9, 3, 20, 4)
+        # vis = malaria_visualize.Visualization(sim.height, sim.width)
 
         print("Starting simulation")
         while t < timeSteps:
-            # print(t)
+            if t % 100 == 0:
+                print(f"t = {t}")
             [d1, d2] = sim.update()  # Catch the data
             line = (
                 str(t) + "," + str(d1) + "," + str(d2) + "\n"
             )  # Separate the data with commas
             file.write(line)  # Write the data to a .csv file
-            vis.update(t, sim.mosquitoPopulation, sim.humanPopulation)
+            # vis.update(t, sim.mosquitoPopulation, sim.humanPopulation)
             t += 1
         file.close()
-        vis.persist()
+        # vis.persist()
 
     if plotData:
         """

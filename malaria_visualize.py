@@ -55,7 +55,6 @@ class Visualization:
             elif h.state == "I":
                 grid[h.position[0]][h.position[1]] = -2
             elif h.state == "Immune":
-                print("Human immune")
                 grid[h.position[0]][h.position[1]] = -3
 
         self.im.set_data(grid)
