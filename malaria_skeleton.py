@@ -347,7 +347,7 @@ if __name__ == "__main__":
     Simulation parameters
     """
     fileName = "simulation"
-    timeSteps = 2000
+    timeSteps = 1000
     t = 0
 
     # whether or not to run simulations and/or plot
@@ -362,14 +362,14 @@ if __name__ == "__main__":
         sim = Model(
             width=50,
             height=50,
-            nHuman=200,
+            nHuman=400,
             nMosquito=500,
             initMosquitoHungry=0.9,
             initMosquitoInfected=0,
             initHumanInfected=0.2,
             humanInfectionProb=0.5,
             mosquitoInfectionProb=0.5,
-            humanDeathByInfectionProb=0.004,
+            humanDeathByInfectionProb=0.2,
             biteProb=0.9,
             mealInterval=3,
             infectionPeriod=20,
@@ -426,4 +426,5 @@ if __name__ == "__main__":
         ax2.legend()
         ax3.legend()
         ax4.legend()
+        plt.savefig("Simulation_statistics.png")
         plt.show()

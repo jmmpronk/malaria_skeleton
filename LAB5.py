@@ -13,44 +13,21 @@ from malaria_skeleton import Model
 parameters = {
     "width": [50, False],
     "height": [50, False],
-    "nHuman": [200, True, 1, 100],
-    "nMosquito": [500, True, 1, 500],
+    "nHuman": [400, True, 1, 100],
+    "nMosquito": [4000, True, 1, 500],
     "initMosquitoHungry": [0.9, True, 0.0, 1.0],
     "initMosquitoInfected": [0.0, True, 0.0, 1.0],
     "initHumanInfected": [0.2, True, 0.0, 1.0],
     "humanInfectionProb": [0.5, True],
     "mosquitoInfectionProb": [0.5, True, 0.0, 1.0],
-    "humanDeathByInfectionProb": [0.004, True, 0.0, 1.0],
-    "biteProb": [0.9, True, 0.0, 1.0],
-    "mealInterval": [3, True, 1, 100],
+    "humanDeathByInfectionProb": [0.003, True, 0.0, 1.0],
+    "biteProb": [0.2, True, 0.0, 1.0],
+    "mealInterval": [7, True, 1, 100],
     "infectionPeriod": [20, True, 1, 100],
-    "immuntiyPeriod": [20, True, 1, 100],
-    "humanNaturalDeathProb": [0.001, False],
-    "mosquitoNaturalDeathProb": [0.01, False],
+    "immuntiyPeriod": [500, True, 1, 100],
+    "humanNaturalDeathProb": [1 / (60 * 365), False],
+    "mosquitoNaturalDeathProb": [0.02, False],
 }
-
-# width=50,
-# height=50,
-# nHuman=200,
-# nMosquito=500,
-# initMosquitoHungry=0.9,
-# initMosquitoInfected=0,
-# initHumanInfected=0.2,
-# humanInfectionProb=0.5,
-# mosquitoInfectionProb=0.5,
-# humanDeathByInfectionProb=0.004,
-# biteProb=0.9,
-# mealInterval=3,
-# infectionPeriod=20,
-# immuntiyPeriod=20,
-# humanNaturalDeathProb=0.001,
-# mosquitoNaturalDeathProb=0.01,
-
-# parameter_values = [parameters.get(key)[0] for key in parameters.keys()]
-# parameter_changable = [parameters.get(key)[1] for key in parameters.keys()]
-# indeces = np.where(parameter_changable)[0]
-# parameter_step_keys = [list(parameters.keys())[i] for i in indeces]
-# print(parameter_step_keys)
 
 
 def parameter_sweep(steps, init_parameters, parameter, values):
@@ -89,10 +66,9 @@ def parameter_sweep(steps, init_parameters, parameter, values):
 
             data = sim.update()
 
-            # save data for last 20% of time steps
-            if t >= 0.8 * steps:
-                t_list.append(t)
-                infection_fractions.append(data[0])
+            # save data
+            t_list.append(t)
+            infection_fractions.append(data[0])
 
         df["t"] = t_list
         df["infection_fraction"] = infection_fractions
@@ -102,43 +78,82 @@ def parameter_sweep(steps, init_parameters, parameter, values):
     return data_dict
 
 
-data = parameter_sweep(
-    steps=2000,
-    init_parameters=parameters,
-    parameter="nHuman",
-    values=[50, 100, 300, 500],
-)
+steps = 1000
 
-for i, key in enumerate(data.keys()):
-    df = data[key]
-    plt.plot(df["t"], df["infection_fraction"], label="nHuman = " + key)
+# effect of population
+parameter = "nHuman"
+values = [50, 100, 200, 300, 400]
 
-plt.xlabel("t")
-plt.ylabel("infection fraction")
-plt.legend()
-plt.savefig("nHumans_vs_infection.png")
-plt.show()
+# # effect of pesticide treatment
+# parameter = "mosquitoNaturalDeathProb"
+# values = [0.001, 0.01, 0.02, 0.03, 0.04]
+
+simulate = True
+plot_relation = True
+
+if simulate == True:
+    data = parameter_sweep(
+        steps=steps,
+        init_parameters=parameters,
+        parameter=parameter,
+        values=values,
+    )
+
+    for i, key in enumerate(data.keys()):
+        df = data[key]
+        df.to_csv("testdata_" + parameter + "_" + key + ".csv")
 
 
-# sim = malaria.Model(*parameter_values)
-# vis = malaria_visualize.Visualization(sim.height, sim.width)
+if plot_relation == True:
 
-# # indicate which attributes to store measurements from
-# attributes = {
-#     "death_counts": sim.deathCount,
-#     "infected_counts": sim.infectedCount,
-# }  ### NOT what I want, value in dictionary, not the method...
+    # plot time evolution for each parameter
+    for value in values:
+        # read data
+        df = pd.read_csv(("testdata_" + parameter + f"_{value}.csv"))
 
-# # store measurements in dictionairy
-# measurements = dict.fromkeys(attributes.keys(), [])
+        plt.plot(
+            df["t"],
+            df["infection_fraction"],
+            label=parameter + f" = {value}",
+            linewidth=0.5,
+        )
 
-# for t in range(1000):
-#     for sim_attribute in attributes.keys():
-#         sim.update()
-#         if t % 100 == 0:
-#             vis.update(t, sim.mosquitoPopulation, sim.humanPopulation)
+    plt.xlabel("t")
+    plt.ylabel("infection fraction")
+    plt.ylim(0, 0.6)
+    plt.legend()
+    plt.savefig(f"testinfections_over_time_per_{parameter}.png")
+    plt.show()
 
-#         measurements[sim_attribute].append(attributes[sim_attribute])
-# vis.persist()
+    fraction = float(input("Which fraction of the total simulation is stable? \n"))
 
-# print(measurements["death_counts"][-10:])
+    stable_infection_fractions = []
+    err_stable_infection_fractions = []
+
+    for value in values:
+        # read data
+        df = pd.read_csv(("testdata_" + parameter + f"_{value}.csv"))
+
+        # crop df to fraction
+        df = df[int((1 - fraction) * len(df)) :]
+
+        # determine mean and error and store values
+        stable_infection_fractions.append(np.mean(df["infection_fraction"]))
+        err_stable_infection_fractions.append(np.std(df["infection_fraction"]))
+
+    plt.errorbar(
+        values,
+        stable_infection_fractions,
+        yerr=err_stable_infection_fractions,
+        fmt="o-",
+        capsize=4,
+        linewidth=0.5,
+    )
+    plt.xlabel(parameter)
+    plt.ylabel("infection fraction")
+    plt.title(
+        f"Mean infection fraction when stable: \nfor last {fraction*100}% of {steps} time steps"
+    )
+    plt.savefig("test" + parameter + "_vs_infection.png")
+
+    plt.show()
